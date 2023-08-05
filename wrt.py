@@ -1,32 +1,38 @@
+#Aim: Implementation of Sumple Regression
+#Name: Anirbaan Ghatak
+#Roll no.: C026
+
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score, mean_squared_error
 
-#Loading the CSV file into a DataFrame:
-df = pd.read_csv('indian_food.csv')
+df = pd.read_csv('USA_Housing.csv')
 
-# Printing the size, shape, and data types of the DataFrame:
-print(f'size: {df.size}')
-print(f'shape: {df.shape}')
-print(f'data types of each column in the dataset:\n{df.dtypes}')
+df.head(10)
+df.info()
+df.columns
 
-#Getting the total number of Indian dishes
-x, y = df.shape
-print("Total no of Indian dishes: ", x)
+sns.heatmap(df.corr(), annot=True)
 
-# Replacing empty spaces with NaN
-df.replace(' ', np.nan, inplace=True)
+X = df[['Avg. Area Income', 'Avg. Area House Age', 'Avg. Area Number of Rooms',
+       'Avg. Area Number of Bedrooms', 'Area Population']]
+Y = df['Price']
 
-#Selecting and printing numerical columns
-df.select_dtypes(include=['float64', 'int64']).columns
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.40, random_state=101)
 
-# Printing the number of unique values in each column
-for col in df.columns:
-    print(col, df[col].nunique())
+lm = LinearRegression()
+lm.fit(X_train, Y_train)
 
-# Adding a new column for the total time
-df['total time'] = df['prep_time'] + df['cook_time']
-print(df['total time'].head(10))
+coeff_df = pd.DataFrame(lm.coef_,X.columns,columns=['Coefficient'])
+print(coeff_df)
 
-# Finding the number of ingredients for each recipe
-df['num_ingredients'] = df['ingredients'].apply(len)
-print(df['num_ingredients'].head(10))
+prediction = lm.predict(X_test)
+plt.scatter(Y_test, prediction)
+
+print('SSE:', np.sum((Y_test - prediction) ** 2))
+print('RSME:', np.sqrt(mean_squared_error(Y_test, prediction)))
+print('R2:', r2_score(Y_test, prediction))
