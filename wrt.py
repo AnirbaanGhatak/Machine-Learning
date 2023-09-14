@@ -1,38 +1,49 @@
-#Aim: Implementation of Sumple Regression
-#Name: Anirbaan Ghatak
-#Roll no.: C026
+# Name: Anirbaan Ghatak
+# Roll no: C026
+# Aim: :  Implementation of ID3(Decision Tree) Classifier. Also to find the performance metrics for the given dataset.
 
+from sklearn.preprocessing import LabelEncoder
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import r2_score, mean_squared_error
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.tree import DecisionTreeClassifier
+from sklearn import tree
 
-df = pd.read_csv('USA_Housing.csv')
+data = pd.read_csv('weather_data.csv', index_col='Day')
 
-df.head(10)
-df.info()
-df.columns
+# Convert the list of dictionaries to a DataFrame
+headers = ['Outlook', 'Temperature', 'Humidity', 'Wind', 'Decision']
 
-sns.heatmap(df.corr(), annot=True)
+df = pd.DataFrame(data, columns=headers)
 
-X = df[['Avg. Area Income', 'Avg. Area House Age', 'Avg. Area Number of Rooms',
-       'Avg. Area Number of Bedrooms', 'Area Population']]
-Y = df['Price']
+# Encode label categories to numbers, This is necessary because scikit-learn's decision tree implementation works with numerical data
 
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.40, random_state=101)
+label_encoders = {}
 
-lm = LinearRegression()
-lm.fit(X_train, Y_train)
+for column in df.columns:
+    le = LabelEncoder()
+    df[column] = le.fit_transform(df[column])
+    label_encoders[column] = le
 
-coeff_df = pd.DataFrame(lm.coef_,X.columns,columns=['Coefficient'])
-print(coeff_df)
+# Separate features and target variable from the DataFrame
 
-prediction = lm.predict(X_test)
-plt.scatter(Y_test, prediction)
+X = df.drop('Decision', axis=1)  # Features (exclude the 'Decision' column)
+y = df['Decision']  # Target variable ('Decision')
 
-print('SSE:', np.sum((Y_test - prediction) ** 2))
-print('RSME:', np.sqrt(mean_squared_error(Y_test, prediction)))
-print('R2:', r2_score(Y_test, prediction))
+# Initialize the DecisionTreeClassifier with criterion as 'entropy' to simulate ID3
+clf = DecisionTreeClassifier(criterion='entropy', random_state=42)
+
+# Fit the model
+clf.fit(X, y)
+
+# Display the decision tree
+tree.plot_tree(
+    clf, feature_names=headers[:-1], class_names=['No', 'Yes'], filled=True)
+
+y_pred = clf.predict(X)
+accuracy = accuracy_score(y, y_pred)
+class_report = classification_report(y, y_pred, target_names=['No', 'Yes'])
+conf_matrix = confusion_matrix(y, y_pred)
+
+print('Accuracy:', accuracy)
+print('Classification Report:\n', class_report)
+print('Confusion Matrix:\n', conf_matrix)
